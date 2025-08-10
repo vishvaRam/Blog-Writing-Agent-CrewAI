@@ -1,0 +1,23 @@
+
+services:
+  blog_write:
+    build: ./
+    container_name: blog_write
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./:/workspace
+      - ~/.cache:/root/.cache 
+
+    working_dir: /workspace
+    ipc: host 
+    
+    ulimits:  
+      memlock: -1
+      stack: 67108864
+
+    dns:
+      - 8.8.8.8  
+      - 8.8.4.4
+    
+    restart: unless-stopped 
