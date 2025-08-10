@@ -1,9 +1,47 @@
+# Python Dependencies for YouTube Blog Automation System
+
+# Core CrewAI Framework
 crewai
 crewai-tools
-youtube-transcript-api 
+
+# Google Gemini LLM
+google-generativeai
+litellm
+
+# YouTube Integration
+youtube-transcript-api
 google-api-python-client
-requests 
+google-auth-oauthlib
+google-auth-httplib2
+
+# Stock Image APIs
+requests
+urllib3
+
+# Environment and Configuration
 python-dotenv
-requests 
+pyyaml
+
+# Content Processing
+markdown
 beautifulsoup4
-pillow
+
+# Image Processing (optional)
+Pillow
+
+# Utilities
+pathlib2
+rich # For better console output
+click  # For CLI improvements
+
+# Logging and Monitoring
+loguru
+
+# Date/Time Utilities
+python-dateutil
+
+# HTTP Clients
+httpx
+
+# Data Validation
+pydantic
