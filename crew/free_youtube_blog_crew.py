@@ -33,7 +33,6 @@ class YouTubeBlogCrewFree:
         required_vars = [
             'GEMINI_API_KEY',
             'YOUTUBE_API_KEY',
-            'UNSPLASH_ACCESS_KEY',
             'PEXELS_API_KEY'
         ]
         
@@ -55,13 +54,13 @@ class YouTubeBlogCrewFree:
         
         # Configure Gemini LLM instances
         self.gemini_flash = LLM(
-            model="gemini/gemini-2.0-flash-exp",
+            model="gemini/gemini-2.5-flash",
             api_key=os.getenv("GEMINI_API_KEY"),
             temperature=0.7
         )
         
         self.gemini_pro = LLM(
-            model="gemini/gemini-2.0-flash-exp", 
+            model="gemini/gemini-2.5-flash", 
             api_key=os.getenv("GEMINI_API_KEY"),
             temperature=0.8
         )
@@ -98,7 +97,7 @@ class YouTubeBlogCrewFree:
             llm=self.gemini_flash,
             verbose=True,
             allow_delegation=False,
-            max_iter=3,
+            max_iter=4,
             memory=True
         )
     
@@ -132,7 +131,6 @@ class YouTubeBlogCrewFree:
             of how visuals enhance digital content. You excel at finding high-quality stock photos that perfectly 
             complement written content and enhance the overall user experience.""",
             tools=[
-                # UnsplashSearchTool(),
                 PexelsSearchTool(),
                 ImageOptimizerTool(),
             ],
@@ -169,7 +167,7 @@ class YouTubeBlogCrewFree:
     def research_videos_task(self) -> Task:
         """Create video research task"""
         return Task(
-            description="""Research and find the top 3 most recent, high-quality YouTube videos related to the topic: {topic}.
+            description="""Research and find the top 4 most recent, high-quality YouTube videos related to the topic: {topic}.
             
             Steps:
             1. Use YouTube Data API to search for recent videos on the specified topic
@@ -180,7 +178,7 @@ class YouTubeBlogCrewFree:
             
             expected_output="""A comprehensive research report in Markdown format containing:
             - Executive summary of findings
-            - Detailed information for each of the 3 videos
+            - Detailed information for each of the 4 videos
             - Full transcripts with analysis
             - Key insights and themes identified
             - Recommendations for blog content focus""",
@@ -194,7 +192,7 @@ class YouTubeBlogCrewFree:
         """Create blog writing task"""
         return Task(
             description="""Create a comprehensive, engaging blog post based on the video research data.
-            Target 6-10 minute read time (1,500-2,500 words) with high-quality, valuable content.
+            Target 8-12 minute read time (2,500-3,500 words) with high-quality, valuable content.
             
             Requirements:
             - Engaging, conversational tone with authority
@@ -207,7 +205,7 @@ class YouTubeBlogCrewFree:
             expected_output="""A complete, publication-ready blog post in Markdown format with:
             - SEO-optimized title and meta description
             - Well-structured content with proper headings
-            - 1,500-2,500 word count
+            - 2,500-3,500 word count
             - Engaging introduction and strong conclusion
             - Natural integration of video insights
             - Proper citations and references""",
@@ -226,14 +224,14 @@ class YouTubeBlogCrewFree:
             
             Requirements:
             - 1 featured image for header/social sharing
-            - 3-4 supporting images for main sections
+            - 1-2 supporting images for main sections
             - High-resolution, professional quality
             - Proper licensing verification
             - SEO-optimized alt text and attributions""",
             
             expected_output="""A curated collection of stock images with metadata:
             - High-quality featured image
-            - 3-4 supporting images
+            - 1-2 supporting images
             - Complete metadata including URLs, alt text, attributions
             - Photographer credits and licensing information
             - Recommended placement within content""",
@@ -247,13 +245,13 @@ class YouTubeBlogCrewFree:
     def publish_content_task(self) -> Task:
         """Create content publishing task for free platforms"""
         return Task(
-            description="""Save the completed blog post locally and optionally publish to free platforms.
+            description="""Save the completed blog post locally and publish to dev.to platforms.
             
             Workflow:
             1. Save blog post locally in organized directory structure
             2. Create publication instructions for manual publishing
             3. Generate image download scripts
-            4. Optionally publish to Dev.to if API key is available
+            4. publish to Dev.to if API key is available
             5. Optionally publish to Hashnode if token is available
             6. Provide comprehensive next steps for manual publishing
             
@@ -268,7 +266,7 @@ class YouTubeBlogCrewFree:
             - Blog post saved as Markdown with metadata
             - Image collection with download scripts
             - Publication instructions for multiple platforms
-            - API publishing results (if keys available)
+            - dev.to API publishing results (if keys available)
             - Manual publishing guidelines
             - Next steps and recommendations
             - Performance tracking suggestions""",
@@ -294,6 +292,6 @@ class YouTubeBlogCrewFree:
                     "api_key": os.getenv("GEMINI_API_KEY")
                 }
             },
-            max_rpm=10,
+            max_rpm=50,
             language="en"
         )

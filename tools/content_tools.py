@@ -14,7 +14,7 @@ class ContentStructuringTool(BaseTool):
     name: str = "Content Structuring Tool"
     description: str = "Structure and format blog content for optimal readability and engagement"
     
-    def _run(self, content: str, title: str = "", target_read_time: int = 8) -> str:
+    def _run(self, content: str, title: str = "", target_read_time: int = 12) -> str:
         """
         Structure and analyze blog content
         

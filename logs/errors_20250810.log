@@ -1,8 +1,0 @@
-2025-08-10 18:12:49 - youtube_blog_automation - ERROR - main:211 - Error during execution: "YouTubeSearchTool" object has no field "api_key"
-2025-08-10 18:21:00 - youtube_blog_automation - ERROR - main:211 - Error during execution: name 'UnsplashSearchTool' is not defined
-2025-08-10 18:22:15 - youtube_blog_automation - ERROR - main:211 - Error during execution: "PexelsSearchTool" object has no field "api_key"
-2025-08-10 18:23:54 - youtube_blog_automation - ERROR - main:211 - Error during execution: 'PexelsSearchTool' object has no attribute '__pydantic_fields_set__'
-2025-08-10 18:24:33 - youtube_blog_automation - ERROR - main:211 - Error during execution: "PexelsSearchTool" object has no field "base_url"
-2025-08-10 18:25:01 - youtube_blog_automation - ERROR - main:211 - Error during execution: "DevToPublisherTool" object has no field "api_key"
-2025-08-10 18:27:08 - youtube_blog_automation - ERROR - main:211 - Error during execution: "HashnodePublisherTool" object has no field "api_token"
-2025-08-10 18:29:15 - youtube_blog_automation - ERROR - main:211 - Error during execution: "HashnodePublisherTool" object has no field "api_url"

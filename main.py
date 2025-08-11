@@ -19,7 +19,6 @@ sys.path.append(str(project_root))
 
 from crew.free_youtube_blog_crew import YouTubeBlogCrewFree
 from utils.logger import setup_logger
-from utils.config_manager import ConfigManager
 
 def print_banner():
     """Print welcome banner"""
@@ -37,7 +36,6 @@ def check_setup():
     required_vars = [
         'GEMINI_API_KEY',
         'YOUTUBE_API_KEY',
-        'UNSPLASH_ACCESS_KEY',
         'PEXELS_API_KEY'
     ]
     
@@ -230,7 +228,6 @@ REQUIRED SETUP:
   2. Add required API keys (all FREE):
      - GEMINI_API_KEY (Google AI Studio)
      - YOUTUBE_API_KEY (Google Cloud Console)
-     - UNSPLASH_ACCESS_KEY (Unsplash Developers)
      - PEXELS_API_KEY (Pexels API)
 
 OPTIONAL SETUP (for auto-publishing):

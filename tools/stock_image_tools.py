@@ -13,113 +13,6 @@ import time
 from pydantic import Field
 
 
-# class UnsplashSearchTool(BaseTool):
-#     name: str = "Unsplash Stock Image Search"
-#     description: str = "Search for high-quality stock images from Unsplash based on topic keywords"
-    
-#     def __init__(self):
-#         self.access_key = os.getenv('UNSPLASH_ACCESS_KEY')
-#         if not self.access_key:
-#             raise ValueError("UNSPLASH_ACCESS_KEY environment variable is required")
-#         self.base_url = "https://api.unsplash.com"
-        
-#     def _run(self, query: str, count: int = 4, orientation: str = "landscape") -> str:
-#         """
-#         Search for stock images on Unsplash
-        
-#         Args:
-#             query: Search terms for images
-#             count: Number of images to return (max 30)
-#             orientation: Image orientation (landscape, portrait, squarish)
-#         """
-#         try:
-#             url = f"{self.base_url}/search/photos"
-#             headers = {
-#                 "Authorization": f"Client-ID {self.access_key}",
-#                 "Accept-Version": "v1"
-#             }
-            
-#             params = {
-#                 "query": query,
-#                 "per_page": min(count, 30),
-#                 "orientation": orientation,
-#                 "content_filter": "high",  # Filter for high quality images
-#                 "order_by": "relevant"
-#             }
-            
-#             response = requests.get(url, headers=headers, params=params, timeout=10)
-#             response.raise_for_status()
-            
-#             data = response.json()
-            
-#             images = []
-#             for photo in data.get('results', []):
-#                 # Trigger download tracking (required by Unsplash API)
-#                 self._trigger_download_tracking(photo['links']['download_location'])
-                
-#                 image_info = {
-#                     'id': photo['id'],
-#                     'description': photo.get('description', photo.get('alt_description', f"Stock photo related to {query}")),
-#                     'urls': {
-#                         'raw': photo['urls']['raw'],
-#                         'full': photo['urls']['full'],
-#                         'regular': photo['urls']['regular'],
-#                         'small': photo['urls']['small'],
-#                         'thumb': photo['urls']['thumb']
-#                     },
-#                     'photographer': {
-#                         'name': photo['user']['name'],
-#                         'username': photo['user']['username'],
-#                         'profile': f"https://unsplash.com/@{photo['user']['username']}",
-#                         'portfolio_url': photo['user'].get('portfolio_url', '')
-#                     },
-#                     'dimensions': {
-#                         'width': photo['width'],
-#                         'height': photo['height']
-#                     },
-#                     'color': photo.get('color', '#ffffff'),
-#                     'downloads': photo.get('downloads', 0),
-#                     'likes': photo.get('likes', 0),
-#                     'unsplash_url': photo['links']['html'],
-#                     'download_location': photo['links']['download_location'],
-#                     'attribution': f"Photo by {photo['user']['name']} on Unsplash",
-#                     'attribution_url': photo['links']['html'],
-#                     'license': "Unsplash License (https://unsplash.com/license)",
-#                     'source': 'unsplash'
-#                 }
-#                 images.append(image_info)
-            
-#             return json.dumps({
-#                 "source": "unsplash",
-#                 "total_results": data.get('total', 0),
-#                 "images_returned": len(images),
-#                 "images": images,
-#                 "search_query": query,
-#                 "search_timestamp": time.time()
-#             }, indent=2)
-            
-#         except requests.RequestException as e:
-#             return json.dumps({
-#                 "error": f"Network error searching Unsplash: {str(e)}",
-#                 "search_query": query,
-#                 "source": "unsplash"
-#             })
-#         except Exception as e:
-#             return json.dumps({
-#                 "error": f"Error searching Unsplash: {str(e)}",
-#                 "search_query": query,
-#                 "source": "unsplash"
-#             })
-    
-#     def _trigger_download_tracking(self, download_url: str):
-#         """Trigger download tracking as required by Unsplash API"""
-#         try:
-#             headers = {"Authorization": f"Client-ID {self.access_key}"}
-#             requests.get(download_url, headers=headers, timeout=5)
-#         except:
-#             pass  # Download tracking is best-effort
-
-
 class PexelsSearchTool(BaseTool):
     name: str = "Pexels Stock Image Search"
     description: str = "Search for high-quality stock images from Pexels based on topic keywords"
@@ -133,13 +26,13 @@ class PexelsSearchTool(BaseTool):
             raise ValueError("PEXELS_API_KEY environment variable is required")
         self.base_url = "https://api.pexels.com/v1"
         
-    def _run(self, query: str, count: int = 4, orientation: str = "landscape") -> str:
+    def _run(self, query: str, count: int = 2, orientation: str = "landscape") -> str:
         """
         Search for stock images on Pexels
         
         Args:
             query: Search terms for images
-            count: Number of images to return (max 80)
+            count: Number of images to return (max 40)
             orientation: Image orientation (landscape, portrait, square)
         """
         try:
@@ -150,7 +43,7 @@ class PexelsSearchTool(BaseTool):
             
             params = {
                 "query": query,
-                "per_page": min(count, 80),
+                "per_page": min(count, 40),
                 "orientation": orientation
             }
             
