@@ -1,6 +1,6 @@
 """
 YouTube Tools for CrewAI Blog Automation
-Updated implementation with youtube-transcript-api v1.2.2
+Optimized implementation with chunking and summarization to reduce LLM context usage
 Falls back to video description when transcripts are unavailable
 """
 
@@ -9,6 +9,7 @@ import json
 import re
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
+from collections import Counter
 from pydantic import Field
 from crewai.tools import BaseTool
 from googleapiclient.discovery import build
@@ -188,24 +189,25 @@ class YouTubeSearchTool(BaseTool):
 
 
 class YouTubeTranscriptTool(BaseTool):
-    name: str = "YouTube Transcript Extractor"
-    description: str = "Extract transcript from a YouTube video with error handling and fallback to description"
+    name: str = "YouTube Transcript Extractor with Summarization"
+    description: str = "Extract and summarize transcript from a YouTube video to optimize for LLM context length"
     
-    def _run(self, video_id: str, video_description: str = "", language_preference: str = 'en') -> str:
+    def _run(self, video_id: str, video_description: str = "", language_preference: str = 'en', max_summary_length: int = 1000) -> str:
         """
-        Extract transcript from a YouTube video using youtube-transcript-api v1.2.2
+        Extract and summarize transcript from a YouTube video
         
         Args:
             video_id: YouTube video ID
             video_description: Video description as fallback if transcript unavailable
             language_preference: Preferred language code (default: 'en')
+            max_summary_length: Maximum length for summary to control context size
         
         Returns:
-            JSON string with transcript data or fallback content
+            JSON string with summarized transcript data and key insights
         """
         try:
             try:
-                # NEW API: Initialize YouTubeTranscriptApi and get transcript list
+                # Initialize YouTubeTranscriptApi and get transcript list
                 ytt_api = YouTubeTranscriptApi()
                 transcript_list = ytt_api.list(video_id)
                 
@@ -233,10 +235,11 @@ class YouTubeTranscriptTool(BaseTool):
                     'video_id': video_id,
                     'language': 'n/a',
                     'source_type': 'description-fallback',
-                    'transcript_segments': [],
-                    'full_text': video_description or "(No transcript or description available)",
+                    'key_insights': self._extract_insights_from_description(video_description),
+                    'summary': video_description[:max_summary_length] if video_description else "(No content available)",
                     'word_count': len(video_description.split()) if video_description else 0,
-                    'duration_seconds': 0,
+                    'topics': [],
+                    'quotes': [],
                     'quality_metrics': {
                         'quality_score': 50 if video_description else 0,
                         'issues': ['Transcript not available'],
@@ -246,18 +249,22 @@ class YouTubeTranscriptTool(BaseTool):
                     'fallback_used': True
                 })
             
-            # Process transcript data
-            processed_transcript = self._process_transcript(transcript_data)
+            # Process and summarize transcript data
+            processed_data = self._process_and_summarize_transcript(transcript_data, max_summary_length)
             quality_metrics = self._assess_transcript_quality(transcript_data)
             
             return json.dumps({
                 'video_id': video_id,
                 'language': transcript.language_code,
                 'source_type': source_type,
-                'transcript_segments': transcript_data,
-                'full_text': processed_transcript['full_text'],
-                'word_count': processed_transcript['word_count'],
-                'duration_seconds': processed_transcript['duration'],
+                'key_insights': processed_data['key_insights'],
+                'summary': processed_data['summary'],
+                'topics': processed_data['topics'],
+                'quotes': processed_data['quotes'],
+                'statistics': processed_data['statistics'],
+                'word_count': processed_data['original_word_count'],
+                'summary_word_count': processed_data['summary_word_count'],
+                'duration_seconds': processed_data['duration'],
                 'quality_metrics': quality_metrics,
                 'extraction_timestamp': datetime.now().isoformat(),
                 'fallback_used': False
@@ -269,14 +276,15 @@ class YouTubeTranscriptTool(BaseTool):
                 'video_id': video_id,
                 'source_type': 'error-fallback',
                 'error': str(e),
-                'full_text': video_description or "(Error occurred and no description available)",
+                'summary': video_description[:max_summary_length] if video_description else "(Error occurred and no content available)",
+                'key_insights': [],
                 'word_count': len(video_description.split()) if video_description else 0,
                 'fallback_used': True,
                 'extraction_timestamp': datetime.now().isoformat()
             })
     
-    def _process_transcript(self, transcript_data: List[Dict]) -> Dict[str, Any]:
-        """Process raw transcript data into usable format"""
+    def _process_and_summarize_transcript(self, transcript_data: List[Dict], max_length: int = 1000) -> Dict[str, Any]:
+        """Process transcript and extract key insights instead of full text"""
         full_text = ' '.join([item['text'] for item in transcript_data])
         word_count = len(full_text.split())
         duration = transcript_data[-1]['start'] + transcript_data[-1]['duration'] if transcript_data else 0
@@ -285,11 +293,169 @@ class YouTubeTranscriptTool(BaseTool):
         full_text = re.sub(r'\[.*?\]', '', full_text)  # Remove timestamps and annotations
         full_text = re.sub(r'\s+', ' ', full_text).strip()  # Normalize whitespace
         
+        # Extract key components
+        key_insights = self._extract_key_insights(full_text)
+        topics = self._extract_topics(full_text)
+        quotes = self._extract_important_quotes(full_text)
+        statistics = self._extract_statistics(full_text)
+        
+        # Create a concise summary
+        summary = self._create_summary(full_text, max_length)
+        
         return {
-            'full_text': full_text,
-            'word_count': word_count,
+            'key_insights': key_insights,
+            'summary': summary,
+            'topics': topics,
+            'quotes': quotes,
+            'statistics': statistics,
+            'original_word_count': word_count,
+            'summary_word_count': len(summary.split()),
             'duration': duration
         }
+    
+    def _extract_key_insights(self, text: str) -> List[str]:
+        """Extract key insights and main points from transcript"""
+        insights = []
+        
+        # Look for sentences with key insight indicators
+        sentences = re.split(r'[.!?]+', text)
+        insight_keywords = [
+            'important', 'key', 'crucial', 'essential', 'main point',
+            'remember', 'tip', 'advice', 'recommendation', 'secret',
+            'mistake', 'avoid', 'best practice', 'lesson', 'takeaway'
+        ]
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 20:  # Avoid very short sentences
+                for keyword in insight_keywords:
+                    if keyword in sentence.lower():
+                        insights.append(sentence[:200] + '...' if len(sentence) > 200 else sentence)
+                        break
+        
+        # Return top 5 insights
+        return insights[:5]
+    
+    def _extract_topics(self, text: str) -> List[str]:
+        """Extract main topics using keyword analysis"""
+        # Remove common words and extract meaningful terms
+        words = re.findall(r'\b[a-zA-Z]{4,}\b', text.lower())
+        common_words = {
+            'that', 'this', 'with', 'have', 'will', 'been', 'were', 'said', 
+            'what', 'your', 'they', 'them', 'like', 'just', 'know', 'think',
+            'really', 'going', 'want', 'need', 'make', 'time', 'people'
+        }
+        meaningful_words = [word for word in words if word not in common_words]
+        
+        # Get most frequent terms
+        word_counts = Counter(meaningful_words)
+        return [word for word, count in word_counts.most_common(10)]
+    
+    def _extract_important_quotes(self, text: str) -> List[str]:
+        """Extract important quotes or statements"""
+        quotes = []
+        
+        # Look for quoted text or emphatic statements
+        sentences = re.split(r'[.!?]+', text)
+        quote_indicators = [
+            '"', "'", 'i believe', 'i think', 'in my opinion',
+            'the key is', 'what matters', 'most important'
+        ]
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if 30 <= len(sentence) <= 150:  # Good quote length
+                for indicator in quote_indicators:
+                    if indicator in sentence.lower():
+                        quotes.append(sentence)
+                        break
+        
+        return quotes[:3]  # Top 3 quotes
+    
+    def _extract_statistics(self, text: str) -> List[str]:
+        """Extract statistics and numerical data"""
+        statistics = []
+        
+        # Look for patterns with numbers and percentages
+        stat_patterns = [
+            r'\d+\s*percent',
+            r'\d+%',
+            r'\$\d+[\d,]*',
+            r'\d+\s*million',
+            r'\d+\s*billion',
+            r'\d+\s*times',
+            r'\d+\s*years?',
+            r'\d+\s*months?'
+        ]
+        
+        for pattern in stat_patterns:
+            matches = re.finditer(pattern, text, re.IGNORECASE)
+            for match in matches:
+                # Get surrounding context
+                start = max(0, match.start() - 50)
+                end = min(len(text), match.end() + 50)
+                context = text[start:end].strip()
+                statistics.append(context)
+        
+        return list(set(statistics))[:5]  # Remove duplicates, top 5
+    
+    def _create_summary(self, text: str, max_length: int) -> str:
+        """Create a concise summary of the transcript"""
+        sentences = re.split(r'[.!?]+', text)
+        
+        # Score sentences based on position and content
+        scored_sentences = []
+        for i, sentence in enumerate(sentences):
+            sentence = sentence.strip()
+            if len(sentence) < 20:
+                continue
+                
+            score = 0
+            
+            # Position scoring (beginning and end are important)
+            if i < len(sentences) * 0.2:  # First 20%
+                score += 2
+            elif i > len(sentences) * 0.8:  # Last 20%
+                score += 1
+            
+            # Content scoring
+            important_words = ['important', 'key', 'main', 'summary', 'conclusion']
+            for word in important_words:
+                if word in sentence.lower():
+                    score += 1
+            
+            scored_sentences.append((score, sentence))
+        
+        # Sort by score and select top sentences
+        scored_sentences.sort(reverse=True)
+        
+        summary_sentences = []
+        current_length = 0
+        
+        for score, sentence in scored_sentences:
+            if current_length + len(sentence) <= max_length:
+                summary_sentences.append(sentence)
+                current_length += len(sentence)
+            else:
+                break
+        
+        return ' '.join(summary_sentences)
+    
+    def _extract_insights_from_description(self, description: str) -> List[str]:
+        """Extract insights from video description as fallback"""
+        if not description:
+            return []
+        
+        # Split by lines and extract meaningful lines
+        lines = description.split('\n')
+        insights = []
+        
+        for line in lines:
+            line = line.strip()
+            if 20 <= len(line) <= 200 and not line.startswith('http'):
+                insights.append(line)
+        
+        return insights[:5]
     
     def _assess_transcript_quality(self, transcript_data: List[Dict]) -> Dict[str, Any]:
         """Assess the quality of the transcript for blog creation"""
@@ -318,8 +484,8 @@ class YouTubeTranscriptTool(BaseTool):
             issues.append('Transcript too short for substantial content')
             quality_score -= 25
         elif word_count > 5000:
-            issues.append('Very long transcript - may need summarization')
-            quality_score -= 5
+            issues.append('Very long transcript - using summarization')
+            # Don't penalize for long transcripts since we're summarizing
         
         # Check for common transcript errors
         error_indicators = ['[Music]', '[Applause]', '[Inaudible]', 'um,', 'uh,', '...']
@@ -335,109 +501,3 @@ class YouTubeTranscriptTool(BaseTool):
             'issues': issues,
             'recommended_for_blog': quality_score >= 50
         }
-
-
-# Helper function for research aggregation
-def extract_video_content(search_tool, transcript_tool, topic: str, max_videos: int = 3) -> str:
-    """
-    Complete video research workflow that always returns usable content
-    """
-    try:
-        # Search for videos
-        search_result = json.loads(search_tool._run(topic, max_videos))
-        
-        if 'error' in search_result or not search_result.get('videos'):
-            return json.dumps({
-                'error': 'No videos found or search failed',
-                'topic': topic,
-                'videos_processed': []
-            })
-        
-        videos_with_content = []
-        
-        for video in search_result['videos'][:max_videos]:
-            # Extract transcript with description fallback
-            transcript_result = json.loads(transcript_tool._run(
-                video_id=video['video_id'],
-                video_description=video['description']
-            ))
-            
-            # Combine video metadata with transcript/content
-            video_content = {
-                'video_id': video['video_id'],
-                'title': video['title'],
-                'description': video['description'],
-                'channel': video['channel_title'],
-                'url': video['video_url'],
-                'published_at': video['published_at'],
-                'duration': video['duration_formatted'],
-                'view_count': video['view_count'],
-                'content_text': transcript_result['full_text'],
-                'content_source': transcript_result['source_type'],
-                'word_count': transcript_result['word_count'],
-                'quality_score': transcript_result.get('quality_metrics', {}).get('quality_score', 0),
-                'fallback_used': transcript_result.get('fallback_used', False)
-            }
-            
-            videos_with_content.append(video_content)
-        
-        return json.dumps({
-            'topic': topic,
-            'total_videos_found': search_result['total_found'],
-            'videos_processed': len(videos_with_content),
-            'videos': videos_with_content,
-            'research_timestamp': datetime.now().isoformat()
-        }, indent=2)
-        
-    except Exception as e:
-        return json.dumps({
-            'error': f"Research workflow failed: {str(e)}",
-            'topic': topic,
-            'videos_processed': 0
-        })
-
-
-# Additional utility class for direct API usage (optional)
-class YouTubeTranscriptExtractor:
-    """
-    Simplified wrapper for direct transcript extraction
-    Based on the latest youtube-transcript-api v1.2.2
-    """
-    
-    @staticmethod
-    def get_transcript(video_id: str, languages: List[str] = None) -> Dict[str, Any]:
-        """
-        Simple transcript extraction method
-        
-        Args:
-            video_id: YouTube video ID
-            languages: List of preferred language codes
-            
-        Returns:
-            Dictionary with transcript data
-        """
-        if languages is None:
-            languages = ['en']
-            
-        try:
-            ytt_api = YouTubeTranscriptApi()
-            
-            # Get transcript using the new API
-            fetched_transcript = ytt_api.fetch(video_id, languages=languages)
-            
-            return {
-                'success': True,
-                'video_id': video_id,
-                'language': fetched_transcript.language_code,
-                'is_generated': fetched_transcript.is_generated,
-                'transcript_data': fetched_transcript.to_raw_data(),
-                'full_text': ' '.join([item['text'] for item in fetched_transcript.to_raw_data()])
-            }
-            
-        except Exception as e:
-            return {
-                'success': False,
-                'video_id': video_id,
-                'error': str(e),
-                'transcript_data': []
-            }
