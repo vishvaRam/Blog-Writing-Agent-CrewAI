@@ -1,8 +1,24 @@
-2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
-2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
-2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
-2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
-2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
-2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
-2025-08-12 01:47:27 - youtube_blog_automation - INFO - main:156 - Starting blog automation for topic: Mixture of exports LLM
-2025-08-12 01:58:34 - youtube_blog_automation - INFO - main:168 - Blog automation completed successfully
+2025-08-12 02:03:33 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
+2025-08-12 02:03:33 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
+2025-08-12 02:03:33 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
+2025-08-12 02:03:33 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
+2025-08-12 02:03:33 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
+2025-08-12 02:03:33 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
+2025-08-12 02:03:55 - youtube_blog_automation - INFO - main:156 - Starting blog automation for topic: Qwen 3 LLM model performance
+2025-08-12 02:20:37 - youtube_blog_automation - INFO - main:168 - Blog automation completed successfully
+2025-08-12 02:27:42 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
+2025-08-12 02:27:42 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
+2025-08-12 02:27:42 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
+2025-08-12 02:27:42 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
+2025-08-12 02:27:42 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
+2025-08-12 02:27:42 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
+2025-08-12 02:27:56 - youtube_blog_automation - INFO - main:156 - Starting blog automation for topic: Qwen 3 LLM model performance
+2025-08-12 02:27:56 - youtube_blog_automation - ERROR - main:209 - Error during execution: "DevToPublisherTool" object has no field "api_key"
+2025-08-12 02:28:49 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
+2025-08-12 02:28:49 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
+2025-08-12 02:28:49 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
+2025-08-12 02:28:49 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
+2025-08-12 02:28:49 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
+2025-08-12 02:28:49 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
+2025-08-12 02:29:03 - youtube_blog_automation - INFO - main:156 - Starting blog automation for topic: Qwen 3 LLM model performance
+2025-08-12 02:41:05 - youtube_blog_automation - INFO - main:168 - Blog automation completed successfully

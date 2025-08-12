@@ -1,4 +1,4 @@
-# Publication Instructions for: Unlocking Scalability: A Deep Dive into Mixture of Experts (MoE) for Modern LLMs
+# Publication Instructions for: Qwen 3: The Open-Source LLM Redefining AI Performance and Efficiency
 
 ## 📁 Files Overview
 - **Blog Post**: `blog_post.md`
@@ -49,7 +49,7 @@
 2. **Add Blog Post**:
    ```bash
    # Copy to Jekyll _posts directory
-   cp blog_post.md ../_posts/2025-08-12-unlocking-scalability:-a-deep-dive-into-mixture-of-experts-(moe)-for-modern-llms.md
+   cp blog_post.md ../_posts/2025-08-12-qwen-3:-the-open-source-llm-redefining-ai-performance-and-efficiency.md
    ```
 
 ### Option 4: Manual Publishing
@@ -70,14 +70,14 @@ Copy the content and publish manually to any platform:
 
 ## 📊 Blog Statistics
 
-- **Word Count**: 3661
-- **Estimated Read Time**: 18 minutes
-- **Created**: 20250812_015656
+- **Word Count**: 2775
+- **Estimated Read Time**: 13 minutes
+- **Created**: 20250812_021810
 
 ## 🏷️ Suggested Tags
 
-Based on your topic "Artificial Intelligence", consider these tags:
-- artificialintelligence
+Based on your topic "AI/LLM", consider these tags:
+- ai/llm
 - programming
 - technology
 - ai

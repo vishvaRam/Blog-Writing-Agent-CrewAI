@@ -274,433 +274,89 @@ Happy publishing! 🎉
 
 class DevToPublisherTool(BaseTool):
     name: str = "Dev.to Publisher"
-    description: str = "Publish blog posts to Dev.to platform (FREE)"
-    api_key: Optional[str] = Field(default=None, exclude=True)
-    base_url: str = "https://dev.to/api"
-
+    description: str = "Publish blog posts to Dev.to platform"
+    api_key: str = os.getenv('DEVTO_API_KEY')
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.api_key = os.getenv('DEVTO_API_KEY')
-        if not self.api_key:
-            print("⚠️ Warning: DEVTO_API_KEY not found in environment variables")
         
-    def _run(self, title: str, content: str, tags: str = "", published: bool = False) -> str:
+    def _run(self, blog_data: str) -> str:
         """
-        Publish content to Dev.to
+        Publish content to Dev.to - Fixed input handling
         
         Args:
-            title: Blog post title
-            content: Blog post content in Markdown
-            tags: Comma-separated tags (max 4)
-            published: True to publish immediately, False for draft
+            blog_data: JSON string containing title, content, tags, and published status
         """
         if not self.api_key:
             return json.dumps({
                 'success': False,
-                'error': 'DEVTO_API_KEY environment variable not set',
-                'setup_instructions': [
-                    '1. Visit https://dev.to/settings/extensions',
-                    '2. Scroll to "DEV Community API Keys"',
-                    '3. Generate new API key',
-                    '4. Set DEVTO_API_KEY environment variable',
-                    '5. Example: export DEVTO_API_KEY="your_api_key_here"'
-                ]
+                'error': 'DEVTO_API_KEY not found'
             })
         
         try:
-            # Process tags (Dev.to allows max 4 tags)
-            tags_list = []
-            if tags:
-                tags_list = [tag.strip().lower() for tag in tags.split(',') if tag.strip()][:4]
+            # Parse the input data
+            if isinstance(blog_data, str):
+                data = json.loads(blog_data)
+            else:
+                data = blog_data
+                
+            title = data.get('title', '')
+            content = data.get('content', '')
+            tags = data.get('tags', '')
+            published = data.get('published', True)  # Default to True for direct publishing
             
-            # Clean content - ensure proper markdown format
-            cleaned_content = content.strip()
+            # Process tags
+            tags_list = [tag.strip().lower() for tag in tags.split(',')][:4] if tags else []
             
-            # Create article data with correct Dev.to API format
+            # API payload
             article_data = {
                 "article": {
-                    "title": title.strip(),
-                    "body_markdown": cleaned_content,
+                    "title": title[:128],
+                    "body_markdown": content,
                     "published": published,
-                    "tags": tags_list,
-                    "series": None,  # Optional: can be used for series
-                    "main_image": None,  # Optional: main image URL
-                    "canonical_url": None,  # Optional: if republishing
-                    "description": ""  # Optional: meta description
+                    "tags": tags_list
                 }
             }
             
-            # Set correct headers
+            # Headers
             headers = {
                 "api-key": self.api_key,
-                "Content-Type": "application/json",
-                "Accept": "application/vnd.forem.api-v1+json"
+                "Content-Type": "application/json"
             }
             
-            print(f"📤 Publishing '{title}' to Dev.to...")
-            print(f"🏷️ Tags: {tags_list}")
-            print(f"📊 Status: {'Published' if published else 'Draft'}")
-            
-            # Make API request to correct endpoint
+            # Make API call
             response = requests.post(
-                f"{self.base_url}/articles",
+                "https://dev.to/api/articles",
                 headers=headers,
                 json=article_data,
-                timeout=30
+                timeout=15
             )
-            
-            print(f"📡 API Response Status: {response.status_code}")
             
             if response.status_code == 201:
                 article = response.json()
-                status = "published" if published else "draft"
-                
-                result = {
+                return json.dumps({
                     'success': True,
-                    'platform': 'dev.to',
-                    'article_id': article.get('id'),
                     'url': article.get('url', ''),
-                    'slug': article.get('slug', ''),
-                    'status': status,
-                    'title': title,
-                    'tags': tags_list,
-                    'published_at': article.get('published_at'),
-                    'created_at': article.get('created_at'),
-                    'reading_time_minutes': article.get('reading_time_minutes'),
-                    'public_reactions_count': article.get('public_reactions_count', 0),
-                    'page_views_count': article.get('page_views_count', 0),
-                    'user': article.get('user', {})
-                }
-                
-                print(f"✅ Successfully published to Dev.to!")
-                print(f"🔗 URL: {result['url']}")
-                
-                return json.dumps(result, indent=2)
-                
-            elif response.status_code == 401:
-                return json.dumps({
-                    'success': False,
-                    'error': 'Authentication failed - check your Dev.to API key',
-                    'status_code': response.status_code,
-                    'title': title,
-                    'troubleshooting': [
-                        'Verify your API key is correct',
-                        'Check if API key has expired',
-                        'Ensure you have write permissions',
-                        'Try generating a new API key'
-                    ]
+                    'id': article.get('id'),
+                    'status': 'published' if published else 'draft'
                 })
-                
-            elif response.status_code == 422:
-                error_data = response.json() if response.content else {}
-                return json.dumps({
-                    'success': False,
-                    'error': 'Validation error - check your content format',
-                    'status_code': response.status_code,
-                    'validation_errors': error_data,
-                    'title': title,
-                    'troubleshooting': [
-                        'Check if title is too long (max 128 characters)',
-                        'Verify tags are valid (no special characters)',
-                        'Ensure content is valid markdown',
-                        'Check for duplicate titles'
-                    ]
-                })
-                
-            else:
-                error_text = response.text[:500] if response.content else "No response body"
-                return json.dumps({
-                    'success': False,
-                    'error': f"Failed to publish to Dev.to: HTTP {response.status_code}",
-                    'status_code': response.status_code,
-                    'response_preview': error_text,
-                    'title': title
-                })
-                
-        except requests.exceptions.Timeout:
-            return json.dumps({
-                'success': False,
-                'error': 'Request timeout - Dev.to API took too long to respond',
-                'title': title
-            })
-            
-        except requests.exceptions.ConnectionError:
-            return json.dumps({
-                'success': False,
-                'error': 'Connection error - check your internet connection',
-                'title': title
-            })
-            
-        except Exception as e:
-            return json.dumps({
-                'success': False,
-                'error': f"Unexpected error publishing to Dev.to: {str(e)}",
-                'title': title,
-                'error_type': type(e).__name__
-            })
-
-
-class HashnodePublisherTool(BaseTool):
-    name: str = "Hashnode Publisher"
-    description: str = "Publish blog posts to Hashnode platform (FREE)"
-    api_token: Optional[str] = Field(default=None, exclude=True)
-    api_url: str = "https://api.hashnode.com/v1"
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.api_token = os.getenv('HASHNODE_TOKEN')
-        self.api_url = "https://gql.hashnode.com"
-        
-    def _run(self, title: str, content: str, tags: str = "", published: bool = False) -> str:
-        """
-        Publish content to Hashnode
-        
-        Args:
-            title: Blog post title
-            content: Blog post content in Markdown
-            tags: Comma-separated tags
-            published: True to publish immediately, False for draft
-        """
-        if not self.api_token:
-            return json.dumps({
-                'error': 'HASHNODE_TOKEN environment variable not set',
-                'setup_instructions': [
-                    '1. Visit https://hashnode.com/settings/developer',
-                    '2. Generate Personal Access Token',
-                    '3. Set HASHNODE_TOKEN environment variable'
-                ]
-            })
-        
-        try:
-            # Process tags for Hashnode
-            tags_list = [{"name": tag.strip()} for tag in tags.split(',') if tag.strip()][:5]
-            
-            # GraphQL mutation for publishing
-            mutation = """
-            mutation PublishPost($input: PublishPostInput!) {
-                publishPost(input: $input) {
-                    post {
-                        id
-                        title
-                        url
-                        publishedAt
-                        slug
-                    }
-                }
-            }
-            """
-            
-            # Prepare variables
-            variables = {
-                "input": {
-                    "title": title,
-                    "contentMarkdown": content,
-                    "tags": tags_list,
-                    "publishedAt": datetime.now().isoformat() if published else None
-                }
-            }
-            
-            # Make GraphQL request
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_token}"
-            }
-            
-            response = requests.post(
-                self.api_url,
-                headers=headers,
-                json={
-                    "query": mutation,
-                    "variables": variables
-                },
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                if 'errors' in data:
-                    return json.dumps({
-                        'error': 'GraphQL errors in Hashnode API',
-                        'errors': data['errors'],
-                        'title': title
-                    })
-                
-                post = data['data']['publishPost']['post']
-                
-                return json.dumps({
-                    'success': True,
-                    'platform': 'hashnode',
-                    'post_id': post['id'],
-                    'url': post['url'],
-                    'slug': post['slug'],
-                    'title': post['title'],
-                    'status': 'published' if published else 'draft',
-                    'published_at': post.get('publishedAt'),
-                    'tags': [tag['name'] for tag in tags_list]
-                }, indent=2)
             else:
                 return json.dumps({
-                    'error': f"Failed to publish to Hashnode: {response.status_code}",
-                    'response': response.text[:500],
-                    'title': title
+                    'success': False,
+                    'error': f'HTTP {response.status_code}',
+                    'details': response.text[:200]
                 })
                 
-        except Exception as e:
-            return json.dumps({
-                'error': f"Error publishing to Hashnode: {str(e)}",
-                'title': title
-            })
-
-
-class PublishingOrchestratorTool(BaseTool):
-    name: str = "Publishing Orchestrator"
-    description: str = "Orchestrate the complete publishing workflow: save locally, then publish to selected free platforms"
-    
-    def _run(self, blog_data: str, images_data: str = "", platforms: str = "devto", published: bool = False) -> str:
-        """Complete publishing workflow with better error handling"""
-        try:
-            # Parse blog data
-            blog_info = json.loads(blog_data)
-            title = blog_info.get('title', '')
-            content = blog_info.get('content', '')
-            topic = blog_info.get('topic', '')
-            tags = blog_info.get('tags', '')
-            
-            print(f"🚀 Starting publishing workflow for: '{title}'")
-            
-            results = {
-                'workflow_started': datetime.now().isoformat(),
-                'title': title,
-                'topic': topic,
-                'platforms_requested': platforms.split(','),
-                'results': {},
-                'environment_check': self._check_environment()
-            }
-            
-            # Step 1: Always save locally first
-            print("📁 Saving blog post locally...")
-            local_saver = LocalBlogSaverTool()
-            local_result = local_saver._run(title, content, images_data, topic)
-            local_data = json.loads(local_result)
-            results['results']['local'] = local_data
-            
-            if not local_data.get('success'):
-                return json.dumps({
-                    'error': 'Failed to save locally - aborting workflow',
-                    'details': local_data
-                })
-            
-            print(f"✅ Blog saved locally at: {local_data['blog_directory']}")
-            
-            # Step 2: Publish to requested platforms
-            requested_platforms = [p.strip().lower() for p in platforms.split(',')]
-            
-            if 'devto' in requested_platforms:
-                print("🚀 Publishing to Dev.to...")
-                devto_publisher = DevToPublisherTool()
-                devto_result = devto_publisher._run(title, content, tags, published)
-                devto_data = json.loads(devto_result)
-                results['results']['devto'] = devto_data
-                
-                if devto_data.get('success'):
-                    print(f"✅ Dev.to: {devto_data.get('url', 'Published successfully')}")
-                else:
-                    print(f"❌ Dev.to failed: {devto_data.get('error', 'Unknown error')}")
-            
-            if 'hashnode' in requested_platforms:
-                print("🚀 Publishing to Hashnode...")
-                hashnode_publisher = HashnodePublisherTool()
-                hashnode_result = hashnode_publisher._run(title, content, tags, published)
-                hashnode_data = json.loads(hashnode_result)
-                results['results']['hashnode'] = hashnode_data
-                
-                if hashnode_data.get('success'):
-                    print(f"✅ Hashnode: {hashnode_data.get('url', 'Published successfully')}")
-                else:
-                    print(f"❌ Hashnode failed: {hashnode_data.get('error', 'Unknown error')}")
-            
-            # Generate summary
-            successful_platforms = []
-            failed_platforms = []
-            
-            for platform, result in results['results'].items():
-                if result.get('success'):
-                    successful_platforms.append(platform)
-                else:
-                    failed_platforms.append(platform)
-            
-            results['summary'] = {
-                'total_platforms': len(results['results']),
-                'successful_platforms': successful_platforms,
-                'failed_platforms': failed_platforms,
-                'success_rate': len(successful_platforms) / len(results['results']) * 100,
-                'local_directory': local_data.get('blog_directory'),
-                'next_steps': self._generate_next_steps(results['results'])
-            }
-            
-            print(f"📊 Summary: {len(successful_platforms)}/{len(results['results'])} platforms successful")
-            
-            return json.dumps(results, indent=2)
-            
         except json.JSONDecodeError:
             return json.dumps({
-                'error': 'Invalid JSON format in blog_data or images_data'
+                'success': False,
+                'error': 'Invalid JSON input format'
             })
         except Exception as e:
             return json.dumps({
-                'error': f"Error in publishing orchestrator: {str(e)}",
-                'error_type': type(e).__name__
+                'success': False,
+                'error': str(e)
             })
-    
-    def _check_environment(self) -> Dict[str, Any]:
-        """Check if required environment variables are set"""
-        
-        env_check = {
-            'devto_api_key_set': bool(os.getenv('DEVTO_API_KEY')),
-            'hashnode_token_set': bool(os.getenv('HASHNODE_TOKEN')),
-            'recommendations': []
-        }
-        
-        if not env_check['devto_api_key_set']:
-            env_check['recommendations'].append('Set DEVTO_API_KEY for Dev.to publishing')
-            
-        if not env_check['hashnode_token_set']:
-            env_check['recommendations'].append('Set HASHNODE_TOKEN for Hashnode publishing')
-        
-        return env_check
-    
-    def _generate_next_steps(self, results: Dict[str, Any]) -> List[str]:
-        """Generate next steps based on results"""
-        
-        next_steps = []
-        
-        # Always include local review step
-        if results.get('local', {}).get('success'):
-            local_dir = results['local']['blog_directory']
-            next_steps.append(f"📝 Review your blog post at: {local_dir}")
-            next_steps.append(f"📋 Check publication instructions: {local_dir}/publication_instructions.md")
-        
-        # Add platform-specific steps
-        for platform, result in results.items():
-            if platform == 'local':
-                continue
-                
-            if result.get('success'):
-                url = result.get('url', '')
-                if url:
-                    next_steps.append(f"✅ {platform.title()} published: {url}")
-                else:
-                    next_steps.append(f"✅ {platform.title()} published successfully")
-            else:
-                error = result.get('error', 'Unknown error')
-                next_steps.append(f"❌ {platform.title()} failed: {error}")
-        
-        # Add general recommendations
-        next_steps.extend([
-            "🖼️ Download images using the provided script",
-            "📊 Monitor post performance after 24 hours", 
-            "🔗 Share on social media for maximum reach"
-        ])
-        
-        return next_steps
+
+

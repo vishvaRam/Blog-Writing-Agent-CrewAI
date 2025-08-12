@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from tools.youtube_tools import YouTubeSearchTool, YouTubeTranscriptTool
 from tools.content_tools import ContentStructuringTool, SEOOptimizationTool
 from tools.stock_image_tools import PexelsSearchTool, ImageOptimizerTool
-from tools.free_publishing_tools import LocalBlogSaverTool, DevToPublisherTool, HashnodePublisherTool, PublishingOrchestratorTool
+from tools.free_publishing_tools import LocalBlogSaverTool, DevToPublisherTool 
 
 # Load environment variables
 load_dotenv()
@@ -167,12 +167,11 @@ class YouTubeBlogCrewFree:
             tools=[
                 LocalBlogSaverTool(),
                 DevToPublisherTool(),
-                # PublishingOrchestratorTool(),
             ],
             llm=self.gemini_flash,
             verbose=True,
             allow_delegation=False,
-            max_iter=2,
+            max_iter=3,
             memory=True
         )
 
@@ -206,7 +205,7 @@ class YouTubeBlogCrewFree:
         """Create blog writing task"""
         return Task(
             description="""Create a comprehensive, engaging blog post based on the video research data.
-            Target 8-12 minute read time (2,500-3,500 words) with high-quality, valuable content.
+            Target 6-10 minute read time (1,500-2,500 words) with high-quality, valuable content.
             
             Requirements:
             - Engaging, conversational tone with authority
@@ -219,7 +218,7 @@ class YouTubeBlogCrewFree:
             expected_output="""A complete, publication-ready blog post in Markdown format with:
             - SEO-optimized title and meta description
             - Well-structured content with proper headings
-            - 2,500-3,500 word count
+            - 1,500-2,500 word count
             - Engaging introduction and strong conclusion
             - Natural integration of video insights
             - Proper citations and references""",
@@ -280,7 +279,13 @@ class YouTubeBlogCrewFree:
             - Appropriate tags for developer audience
             - Featured image optimization for Dev.to
             - Professional presentation and SEO optimization
-            
+            **IMPORTANT**: When calling the Dev.to Publisher tool, structure the input as:
+            {
+                "title": "Blog Title",
+                "content": "Full markdown content",
+                "tags": "ai,programming,tech",
+                "published": true
+            }
             Secondary platforms to consider if needed:
             - **Hashnode**: Developer-focused blogging platform
             - **Manual options**: Medium, LinkedIn, personal blog""",
