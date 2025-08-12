@@ -1,0 +1,8 @@
+2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
+2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
+2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
+2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:72 - Logger initialized - Level: INFO
+2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:73 - Log file: logs/youtube_blog_automation_20250812.log
+2025-08-12 01:46:58 - youtube_blog_automation - INFO - logger:74 - Error log: logs/errors_20250812.log
+2025-08-12 01:47:27 - youtube_blog_automation - INFO - main:156 - Starting blog automation for topic: Mixture of exports LLM
+2025-08-12 01:58:34 - youtube_blog_automation - INFO - main:168 - Blog automation completed successfully

@@ -56,7 +56,7 @@ class YouTubeBlogCrewFree:
         self.gemini_flash = LLM(
             model="gemini/gemini-2.5-flash",
             api_key=os.getenv("GEMINI_API_KEY"),
-            temperature=0.7
+            temperature=0.8
         )
         
         self.gemini_pro = LLM(
@@ -97,7 +97,7 @@ class YouTubeBlogCrewFree:
             llm=self.gemini_flash,
             verbose=True,
             allow_delegation=False,
-            max_iter=4,
+            max_iter=3,
             memory=True
         )
     
@@ -106,10 +106,15 @@ class YouTubeBlogCrewFree:
         """Create AI blog content writer agent"""
         return Agent(
             role="AI Blog Content Writer and SEO Specialist",
-            goal="Transform video transcripts into engaging, well-structured blog posts with 6-10 minute read time that provide genuine value to readers",
+            goal="Transform video transcripts into engaging, well-structured blog posts optimized for Dev.to publication with 6-10 minute read time that provide genuine value to developers",
             backstory="""You are a skilled content writer with expertise in creating engaging long-form blog content 
-            that ranks well on search engines. You understand how to structure information for maximum reader engagement, 
-            synthesize insights from multiple sources, and create compelling narratives.""",
+            that ranks well on search engines and performs excellently on developer platforms like Dev.to. 
+            You understand how to structure information for maximum reader engagement, synthesize insights from 
+            multiple sources, and create compelling narratives that resonate with technical audiences.
+            
+            **Dev.to Optimization**: Focus on developer-friendly content with proper markdown formatting, 
+            code examples where relevant, and tags that appeal to the Dev.to community. Ensure content 
+            is structured for easy scanning with clear headings, bullet points, and actionable insights.""",
             tools=[
                 ContentStructuringTool(),
                 SEOOptimizationTool(),
@@ -120,6 +125,7 @@ class YouTubeBlogCrewFree:
             max_iter=3,
             memory=True
         )
+
     
     @agent
     def image_curator(self) -> Agent:
@@ -129,7 +135,11 @@ class YouTubeBlogCrewFree:
             goal="Search and select high-quality, relevant stock images that enhance the blog post content and improve reader engagement",
             backstory="""You are a visual content expert with an eye for compelling imagery and deep understanding 
             of how visuals enhance digital content. You excel at finding high-quality stock photos that perfectly 
-            complement written content and enhance the overall user experience.""",
+            complement written content and enhance the overall user experience. 
+            
+            **Important**: If you cannot find suitable images that directly relate to the blog post topic, 
+            prioritize abstract or technology-themed images instead. These serve as effective visual elements 
+            that maintain professional aesthetics while avoiding irrelevant or poor-quality imagery.""",
             tools=[
                 PexelsSearchTool(),
                 ImageOptimizerTool(),
@@ -140,21 +150,24 @@ class YouTubeBlogCrewFree:
             max_iter=2,
             memory=True
         )
-    
+
     @agent
     def content_publisher(self) -> Agent:
         """Create content publisher agent for free platforms"""
         return Agent(
             role="Free Platform Content Publishing Specialist",
-            goal="Save blog posts locally and publish to free platforms like Dev.to and Hashnode with proper formatting and metadata",
+            goal="Save blog posts locally and publish directly to Dev.to website as blog posts with proper formatting and metadata",
             backstory="""You are a publishing automation expert who ensures content is properly saved locally first, 
             then distributed to free publishing platforms. You handle local organization, backup, and automated publishing 
-            to developer-friendly platforms like Dev.to and Hashnode.""",
+            to developer-friendly platforms like Dev.to and Hashnode.
+            
+            **Primary Focus**: Your main responsibility is to publish content directly to the Dev.to website 
+            as blog posts. Ensure all posts are formatted correctly for Dev.to's markdown system, include 
+            appropriate tags, and maintain professional presentation standards.""",
             tools=[
                 LocalBlogSaverTool(),
                 DevToPublisherTool(),
-                HashnodePublisherTool(),
-                PublishingOrchestratorTool(),
+                # PublishingOrchestratorTool(),
             ],
             llm=self.gemini_flash,
             verbose=True,
@@ -162,12 +175,13 @@ class YouTubeBlogCrewFree:
             max_iter=2,
             memory=True
         )
+
     
     @task
     def research_videos_task(self) -> Task:
         """Create video research task"""
         return Task(
-            description="""Research and find the top 4 most recent, high-quality YouTube videos related to the topic: {topic}.
+            description="""Research and find the top 3 most recent, high-quality YouTube videos related to the topic: {topic}.
             
             Steps:
             1. Use YouTube Data API to search for recent videos on the specified topic
@@ -178,7 +192,7 @@ class YouTubeBlogCrewFree:
             
             expected_output="""A comprehensive research report in Markdown format containing:
             - Executive summary of findings
-            - Detailed information for each of the 4 videos
+            - Detailed information for each of the 3 videos
             - Full transcripts with analysis
             - Key insights and themes identified
             - Recommendations for blog content focus""",
@@ -222,59 +236,71 @@ class YouTubeBlogCrewFree:
             description="""Search for and curate high-quality stock images to enhance the blog post content.
             Focus on finding professional, relevant imagery from Unsplash and Pexels.
             
+            **Fallback Strategy**: If suitable topic-specific images are not available, prioritize 
+            abstract or technology-themed images that maintain professional aesthetics.
+            
             Requirements:
             - 1 featured image for header/social sharing
             - 1-2 supporting images for main sections
             - High-resolution, professional quality
             - Proper licensing verification
-            - SEO-optimized alt text and attributions""",
+            - SEO-optimized alt text and attributions
+            - If no relevant images found, use abstract/tech imagery as fallback""",
             
             expected_output="""A curated collection of stock images with metadata:
-            - High-quality featured image
-            - 1-2 supporting images
+            - High-quality featured image (topic-relevant or abstract/tech fallback)
+            - 1-2 supporting images (topic-relevant or abstract/tech fallback)
             - Complete metadata including URLs, alt text, attributions
             - Photographer credits and licensing information
-            - Recommended placement within content""",
+            - Recommended placement within content
+            - Clear indication if fallback images were used""",
             
             agent=self.image_curator(),
             context=[self.write_blog_post_task()],
             output_file="output/images/image_collection_{topic}.json"
         )
+
     
     @task  
     def publish_content_task(self) -> Task:
         """Create content publishing task for free platforms"""
         return Task(
-            description="""Save the completed blog post locally and publish to dev.to platforms.
+            description="""Save the completed blog post locally and publish directly to Dev.to website as a blog post.
             
-            Workflow:
+            **Primary Workflow**:
             1. Save blog post locally in organized directory structure
-            2. Create publication instructions for manual publishing
-            3. Generate image download scripts
-            4. publish to Dev.to if API key is available
-            5. Optionally publish to Hashnode if token is available
-            6. Provide comprehensive next steps for manual publishing
+            2. **Publish directly to Dev.to website** using proper markdown formatting
+            3. Generate image download scripts for Dev.to integration
+            4. Ensure proper tagging and metadata for Dev.to
+            5. Verify publication success and provide confirmation
+            6. Create backup publication instructions for manual fallback
             
-            Platforms to consider:
-            - **Dev.to**: Large developer community, completely free
+            **Dev.to Focus**: Prioritize direct publication to Dev.to platform with:
+            - Proper markdown formatting for Dev.to standards
+            - Appropriate tags for developer audience
+            - Featured image optimization for Dev.to
+            - Professional presentation and SEO optimization
+            
+            Secondary platforms to consider if needed:
             - **Hashnode**: Developer-focused blogging platform
-            - **GitHub Pages**: Free static site hosting
             - **Manual options**: Medium, LinkedIn, personal blog""",
             
-            expected_output="""Complete local saving and publication report including:
+            expected_output="""Complete publication report with Dev.to focus:
             - Local directory path with organized files
-            - Blog post saved as Markdown with metadata
-            - Image collection with download scripts
-            - Publication instructions for multiple platforms
-            - dev.to API publishing results (if keys available)
-            - Manual publishing guidelines
-            - Next steps and recommendations
-            - Performance tracking suggestions""",
+            - Blog post saved as Markdown with Dev.to-compatible metadata
+            - **Dev.to publication confirmation** with post URL and metrics
+            - Image collection optimized for Dev.to platform
+            - Dev.to-specific formatting verification
+            - Publication success status and analytics setup
+            - Backup manual publishing guidelines (if needed)
+            - Next steps for Dev.to community engagement
+            - Performance tracking for Dev.to metrics""",
             
             agent=self.content_publisher(),
             context=[self.write_blog_post_task(), self.curate_images_task()],
             output_file="output/published/publication_report_{topic}.json"
         )
+
     
     @crew
     def crew(self) -> Crew:

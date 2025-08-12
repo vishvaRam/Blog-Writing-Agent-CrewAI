@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Featured Image",
+    "url": "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg",
+    "alt_text": "Robotic hand interacting with a digital network, representing AI scalability and advanced LLM architecture like Mixture of Experts (MoE).",
+    "attribution": "Photo by Tara Winstead from Pexels (https://www.pexels.com/photo/robot-pointing-on-a-wall-8386440/)",
+    "license": "Pexels License (https://www.pexels.com/license/)",
+    "recommended_placement": "Blog header, social media sharing."
+  },
+  {
+    "name": "Supporting Image 1",
+    "url": "https://images.pexels.com/photos/17485658/pexels-photo-17485658.png",
+    "alt_text": "Abstract digital art representing a neural network or data flow, illustrating the complex internal mechanisms of Mixture of Experts (MoE) LLMs and gating networks.",
+    "attribution": "Photo by Google DeepMind from Pexels (https://www.pexels.com/photo/an-artist-s-illustration-of-artificial-intelligence-ai-this-image-depicts-how-ai-could-adapt-to-an-infinite-amount-of-uses-it-was-created-by-nidia-dias-as-part-of-the-visualising-ai-pr-17485658/)",
+    "license": "Pexels License (https://www.pexels.com/license/)",
+    "recommended_placement": "After 'What is Mixture of Experts (MoE)? The Specialist Approach to LLMs' or 'The Brain Behind MoE: Gating Networks and Intelligent Routing Algorithms' sections."
+  },
+  {
+    "name": "Supporting Image 2",
+    "url": "https://images.pexels.com/photos/785418/pexels-photo-785418.jpeg",
+    "alt_text": "Microprocessor chips on a circuit board, symbolizing the computational hardware and efficiency aspects of modern LLMs and Mixture of Experts (MoE) architecture.",
+    "attribution": "Photo by Jonas Svidras from Pexels (https://www.pexels.com/photo/black-and-yellow-electronic-chip-785418/)",
+    "license": "Pexels License (https://www.pexels.com/license/)",
+    "recommended_placement": "After 'Why Mixture of Experts Matters for Developers and the Future of AI' section, or within the 'MoE vs. Model Merging' section to emphasize hardware implications."
+  }
+]
